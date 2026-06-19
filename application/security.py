@@ -4,10 +4,10 @@ from application.models import User
 jwt = JWTManager()
 
 @jwt.user_identity_loader
-def load(user):
-    return user.username
+def user_identity_lookup(user):
+    return user.id
 
 @jwt.user_lookup_loader
 def user_lookup_callback(_jwt_header, jwt_data):
     identity = jwt_data["sub"]
-    return User.query.filter_by(username=identity).one_or_none()
+    return User.query.get(identity).one_or_none()

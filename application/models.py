@@ -1,30 +1,60 @@
 from .database import db
-
-class Admin(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
-
-    def __repr__(self):
-        return f"<Admin {self.username}>"
-    
-class Trek_Staff(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
-
-    def __repr__(self):
-        return f"<Trek Staff {self.username}>"
-
+from datetime import datetime
 
 
 class User(db.Model):
-    id = db.Column(db.Integer, primary_key=True)
+    id = db.Column(db.Integer(), primary_key=True)
     username = db.Column(db.String(100), nullable=False)
     email = db.Column(db.String(100), unique=True, nullable=False)
     password = db.Column(db.String(100), nullable=False)
+    role = db.Column(db.String(), nullable=False, default="user")
+    active = db.Column(db.Boolean, default=True)
+    
+    # Relationships
+    bookings = db.relationship("Booking", backref="user", lazy=True, cascade="all, delete-orphan")
+    assigned_treks = db.relationship("Trek", backref="assigned_staff", lazy=True, foreign_keys="Trek.assigned_staff_id")
 
     def __repr__(self):
         return f"<User {self.username}>"
+    
+class Staffprofile(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    phone = db.Column(db.String())
+    address = db.Column(db.String())
+    status = db.Column(db.String(), default="Active")
+    user_id = db.Column(db.Integer(), db.ForeignKey("users.id"), unique=True, nullable=False)
+    user = db.relationship("User", backref=db.backref("staff_profile", uselist=False))
+
+    def __repr__(self):
+        return f"<StaffProfile {self.id}>"
+    
+class Trek(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    trek_name = db.Column(db.String(), nullable=False)
+    location = db.Column(db.String(), nullable=False)
+    difficulty = db.Column(db.String(), nullable=False)  # Easy, Moderate, Hard
+    duration = db.Column(db.Integer(), nullable=False)  # in days
+    available_slots = db.Column(db.Integer(), nullable=False)
+    description = db.Column(db.Text())
+    start_date = db.Column(db.Date(), nullable=False)
+    end_date = db.Column(db.Date(), nullable=False)
+    status = db.Column(db.String(), default="Pending")  # Pending, Approved, Open, Closed, Completed
+    created_at = db.Column(db.DateTime(), default=datetime.utcnow)
+    assigned_staff_id = db.Column(db.Integer(), db.ForeignKey("users.id"))
+    
+    # Relationships
+    bookings = db.relationship("Booking", backref="trek", lazy=True, cascade="all, delete-orphan")
+
+    def __repr__(self):
+        return f"<Trek {self.trek_name}>"
+    
+class Booking(db.Model):
+    id = db.Column(db.Integer(), primary_key=True)
+    booking_date = db.Column(db.DateTime(), default=datetime.utcnow)
+    status = db.Column(db.String(), default="Booked")  # Booked, Cancelled, Completed
+    payment_status = db.Column(db.String(), default="Pending")
+    user_id = db.Column(db.Integer(), db.ForeignKey("users.id"), nullable=False)
+    trek_id = db.Column(db.Integer(), db.ForeignKey("treks.id"), nullable=False)
+
+    def __repr__(self):
+        return f"<Booking {self.id}>"
