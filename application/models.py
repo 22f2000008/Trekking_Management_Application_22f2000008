@@ -3,10 +3,11 @@ from datetime import datetime
 
 
 class User(db.Model):
+    __tablename__ = "users"
     id = db.Column(db.Integer(), primary_key=True)
-    username = db.Column(db.String(100), nullable=False)
-    email = db.Column(db.String(100), unique=True, nullable=False)
-    password = db.Column(db.String(100), nullable=False)
+    username = db.Column(db.String(), nullable=False)
+    email = db.Column(db.String(), unique=True, nullable=False)
+    password = db.Column(db.String(), nullable=False)
     role = db.Column(db.String(), nullable=False, default="user")
     active = db.Column(db.Boolean, default=True)
     
@@ -17,7 +18,8 @@ class User(db.Model):
     def __repr__(self):
         return f"<User {self.username}>"
     
-class Staffprofile(db.Model):
+class StaffProfile(db.Model):
+    __tablename__ = "staff_profiles"
     id = db.Column(db.Integer(), primary_key=True)
     phone = db.Column(db.String())
     address = db.Column(db.String())
@@ -29,6 +31,7 @@ class Staffprofile(db.Model):
         return f"<StaffProfile {self.id}>"
     
 class Trek(db.Model):
+    __tablename__ = "treks"
     id = db.Column(db.Integer(), primary_key=True)
     trek_name = db.Column(db.String(), nullable=False)
     location = db.Column(db.String(), nullable=False)
@@ -39,7 +42,6 @@ class Trek(db.Model):
     start_date = db.Column(db.Date(), nullable=False)
     end_date = db.Column(db.Date(), nullable=False)
     status = db.Column(db.String(), default="Pending")  # Pending, Approved, Open, Closed, Completed
-    created_at = db.Column(db.DateTime(), default=datetime.utcnow)
     assigned_staff_id = db.Column(db.Integer(), db.ForeignKey("users.id"))
     
     # Relationships
@@ -49,6 +51,7 @@ class Trek(db.Model):
         return f"<Trek {self.trek_name}>"
     
 class Booking(db.Model):
+    __tablename__ = "bookings"
     id = db.Column(db.Integer(), primary_key=True)
     booking_date = db.Column(db.DateTime(), default=datetime.utcnow)
     status = db.Column(db.String(), default="Booked")  # Booked, Cancelled, Completed

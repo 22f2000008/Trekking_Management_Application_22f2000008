@@ -18,7 +18,7 @@ def create_app():
 
 app = create_app()
 
-#from application.routes import *
+from application.routes import *
 
 if __name__ == '__main__':
     db.create_all()
@@ -26,9 +26,10 @@ if __name__ == '__main__':
     admin = User.query.filter_by(role='admin').first()
 
     if not admin:
-        admin = User(username="admin", email="admin@gmail.com", password="1234", role="admin")
+        admin = User(username="admin", email="admin@gmail.com", password=generate_password_hash("1234"), role="admin")
 
     db.session.add(admin)
     db.session.commit()
+    print("Admin Created Successfully")
 
     app.run(debug=True)
