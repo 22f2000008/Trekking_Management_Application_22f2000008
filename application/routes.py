@@ -1,24 +1,3 @@
-#from flask import current_app as app, jsonify, request, abort
-#from .models import User
-#from flask_jwt_extended import create_access_token, current_user, jwt_required
-
-#@app.route("/login", methods=["POST"])
-#def login():
-  #  email = request.json.get("email", None)
- #   password = request.json.get("password", None)
-
-#    user = User.query.filter_by(email=email).first()
-#    if not user:
-#        return jsonify({"wrong email or password"}), 401
-
-    #Notice that we are passing in the actual sqlalchemy user obejct
-#    access_token = create_access_token(identity=user)
-#    return jsonify(access_token=access_token)
-
-
-
-
-
 from flask import current_app as app
 from flask import request, jsonify
 
@@ -684,3 +663,72 @@ def deactivate_staff(staff_id):
     return jsonify({
         "message": "Staff deactivated successfully"
     }), 200
+
+@app.route("/profile", methods=["PUT"])
+@jwt_required()
+def update_profile():
+
+    data = request.get_json()
+
+    username = data.get("username")
+    email = data.get("email")
+
+    if username:
+        current_user.username = username
+
+    if email:
+        existing_user = User.query.filter_by(
+            email=email
+        ).first()
+
+        if existing_user and existing_user.id != current_user.id:
+            return jsonify({
+                "message": "Email already exists"
+            }), 409
+
+        current_user.email = email
+
+    db.session.commit()
+
+    return jsonify({
+        "message": "Profile updated successfully",
+        "username": current_user.username,
+        "email": current_user.email
+    }), 200
+
+@app.route("/staff/trek/<int:trek_id>/participants", methods=["GET"])
+@jwt_required()
+def view_participants(trek_id):
+
+    if current_user.role != "staff":
+        return jsonify({
+            "message": "Access denied"
+        }), 403
+
+    trek = Trek.query.get(trek_id)
+
+    if not trek:
+        return jsonify({
+            "message": "Trek not found"
+        }), 404
+
+    if trek.assigned_staff_id != current_user.id:
+        return jsonify({
+            "message": "You are not assigned to this trek"
+        }), 403
+
+    bookings = Booking.query.filter_by(
+        trek_id=trek_id
+    ).all()
+
+    result = []
+
+    for booking in bookings:
+        result.append({
+            "user_id": booking.user.id,
+            "username": booking.user.username,
+            "email": booking.user.email,
+            "booking_status": booking.status
+        })
+
+    return jsonify(result), 200
