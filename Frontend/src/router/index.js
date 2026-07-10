@@ -13,6 +13,7 @@ import ManageTreks from "../views/ManageTreks.vue"
 import ViewBookings from "../views/ViewBookings.vue"
 import Participants from "../views/Participants.vue"
 import UpdateStatus from "../views/UpdateStatus.vue"
+import CreateStaff from "../views/CreateStaff.vue"
 
 const router = createRouter({
   history: createWebHistory(import.meta.env.BASE_URL),
@@ -73,7 +74,7 @@ const router = createRouter({
     component:ViewBookings
   },
   {
-    path: "/participants/:id",
+    path: "/participants",
     name: "participants",
     component: Participants
   },
@@ -81,7 +82,12 @@ const router = createRouter({
     path: "/update-status/:id",
     name: "update-status",
     component: UpdateStatus
-  }
+  },
+  {
+    path: "/admin/create-staff",
+    name: "create-staff",
+    component: CreateStaff
+  },
   ]
 })
 

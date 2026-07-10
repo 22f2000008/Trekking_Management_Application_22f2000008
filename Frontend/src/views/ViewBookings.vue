@@ -1,92 +1,99 @@
 <template>
+  <div class="container mt-4">
 
-<div class="container mt-4">
+    <h2 class="mb-4 text-center">
+      All Bookings
+    </h2>
 
-<h2 class="mb-4">
-All Bookings
-</h2>
+    <table class="table table-bordered table-striped table-hover">
 
-<table class="table table-bordered table-striped">
+      <thead class="table-dark">
 
-<thead class="table-dark">
+        <tr>
+          <th>Booking ID</th>
+          <th>User</th>
+          <th>Trek</th>
+          <th>Status</th>
+        </tr>
 
-<tr>
+      </thead>
 
-<th>Booking ID</th>
+      <tbody>
 
-<th>User</th>
+        <tr
+          v-for="booking in bookings"
+          :key="booking.booking_id"
+        >
 
-<th>Trek</th>
+          <td>{{ booking.booking_id }}</td>
 
-<th>Status</th>
+          <td>{{ booking.username }}</td>
 
-</tr>
+          <td>{{ booking.trek_name }}</td>
 
-</thead>
+          <td>
 
-<tbody>
+            <span
+              class="badge"
+              :class="booking.status === 'Booked' ? 'bg-success' : 'bg-secondary'"
+            >
+              {{ booking.status }}
+            </span>
 
-<tr
-v-for="booking in bookings"
-:key="booking.booking_id"
->
+          </td>
 
-<td>{{ booking.booking_id }}</td>
+        </tr>
 
-<td>{{ booking.username }}</td>
+        <tr v-if="bookings.length === 0">
+          <td colspan="4" class="text-center">
+            No bookings found.
+          </td>
+        </tr>
 
-<td>{{ booking.trek_name }}</td>
+      </tbody>
 
-<td>
+    </table>
 
-<span class="badge bg-success">
-
-{{ booking.status }}
-
-</span>
-
-</td>
-
-</tr>
-
-</tbody>
-
-</table>
-
-</div>
-
+  </div>
 </template>
 
 <script setup>
 
 import axios from "axios"
-import { ref,onMounted } from "vue"
+import { ref, onMounted } from "vue"
 
-const bookings=ref([])
+const bookings = ref([])
 
-const token=localStorage.getItem("token")
+const token = localStorage.getItem("token")
 
-const headers={
-Authorization:`Bearer ${token}`
+const headers = {
+    Authorization: `Bearer ${token}`
 }
 
 async function loadBookings(){
 
-const response=await axios.get(
+    try{
 
-"http://127.0.0.1:5000/admin/bookings",
+        const response = await axios.get(
+            "http://127.0.0.1:5000/admin/bookings",
+            { headers }
+        )
 
-{headers}
+        bookings.value = response.data
 
-)
+    }
 
-bookings.value=response.data
+    catch(error){
+
+        alert(error.response?.data?.message || "Server Error")
+
+    }
 
 }
 
 onMounted(()=>{
 
-loadBookings()
+    loadBookings()
 
 })
 

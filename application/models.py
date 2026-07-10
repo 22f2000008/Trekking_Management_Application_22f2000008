@@ -1,7 +1,11 @@
 from .database import db
 from datetime import datetime
 
-
+trek_staff = db.Table(
+    "trek_staff",
+    db.Column("trek_id", db.Integer, db.ForeignKey("treks.id")),
+    db.Column("staff_id", db.Integer, db.ForeignKey("users.id"))
+)
 class User(db.Model):
     __tablename__ = "users"
     id = db.Column(db.Integer(), primary_key=True)
@@ -13,7 +17,7 @@ class User(db.Model):
     
     # Relationships
     bookings = db.relationship("Booking", backref="user", lazy=True, cascade="all, delete-orphan")
-    assigned_treks = db.relationship("Trek", backref="assigned_staff", lazy=True, foreign_keys="Trek.assigned_staff_id")
+    treks = db.relationship("Trek",secondary=trek_staff,back_populates="staffs")
 
     def __repr__(self):
         return f"<User {self.username}>"
@@ -35,29 +39,32 @@ class Trek(db.Model):
     id = db.Column(db.Integer(), primary_key=True)
     trek_name = db.Column(db.String(), nullable=False)
     location = db.Column(db.String(), nullable=False)
-    difficulty = db.Column(db.String(), nullable=False)  # Easy, Moderate, Hard
-    duration = db.Column(db.Integer(), nullable=False)  # in days
+    difficulty = db.Column(db.String(), nullable=False)  
+    duration = db.Column(db.Integer(), nullable=False)   
     available_slots = db.Column(db.Integer(), nullable=False)
     description = db.Column(db.Text())
     start_date = db.Column(db.Date(), nullable=False)
     end_date = db.Column(db.Date(), nullable=False)
-    status = db.Column(db.String(), default="Pending")  # Pending, Approved, Open, Closed, Completed
-    assigned_staff_id = db.Column(db.Integer(), db.ForeignKey("users.id"))
+    status = db.Column(db.String(), default="Pending")    
     
     # Relationships
     bookings = db.relationship("Booking", backref="trek", lazy=True, cascade="all, delete-orphan")
+    staffs = db.relationship("User", secondary=trek_staff, back_populates="treks")
 
     def __repr__(self):
         return f"<Trek {self.trek_name}>"
+    
+
     
 class Booking(db.Model):
     __tablename__ = "bookings"
     id = db.Column(db.Integer(), primary_key=True)
     booking_date = db.Column(db.DateTime(), default=datetime.utcnow)
-    status = db.Column(db.String(), default="Booked")  # Booked, Cancelled, Completed
+    status = db.Column(db.String(), default="Booked")   
     payment_status = db.Column(db.String(), default="Pending")
     user_id = db.Column(db.Integer(), db.ForeignKey("users.id"), nullable=False)
     trek_id = db.Column(db.Integer(), db.ForeignKey("treks.id"), nullable=False)
 
     def __repr__(self):
         return f"<Booking {self.id}>"
+

@@ -1,44 +1,169 @@
 <template>
 
+<nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
+
+    <div class="container-fluid">
+
+        <span class="navbar-brand fw-bold">
+            Staff Dashboard
+        </span>
+
+        <div class="ms-auto">
+
+            <button
+                class="btn btn-outline-light btn-sm me-2"
+                @click="router.push('/staff')"
+            >
+                Staff Dashboard
+            </button>
+
+            <button
+                class="btn btn-outline-light btn-sm me-2"
+                @click="goParticipants"
+            >
+                Participants
+            </button>
+
+            <button
+                class="btn btn-danger btn-sm"
+                @click="logout"
+            >
+                Logout
+            </button>
+
+        </div>
+
+    </div>
+
+</nav>
+
+
 <div class="container mt-4">
 
     <h2 class="text-center mb-4">
         Staff Dashboard
     </h2>
 
-    <div
-        class="card shadow mb-4"
-        v-for="trek in treks"
-        :key="trek.id"
-    >
+    <!-- Statistics -->
 
-        <div class="card-body">
+    <div class="row mb-4">
 
-            <h4>{{ trek.trek_name }}</h4>
+        <div class="col-md-4">
 
-            <p><b>Location:</b> {{ trek.location }}</p>
+            <div class="card text-center shadow">
 
-            <p><b>Difficulty:</b> {{ trek.difficulty }}</p>
+                <div class="card-body">
 
-            <p><b>Duration:</b> {{ trek.duration }} Days</p>
+                    <h5>Assigned Treks</h5>
 
-            <p><b>Available Slots:</b> {{ trek.available_slots }}</p>
+                    <h2>{{ treks.length }}</h2>
 
-            <p><b>Status:</b> {{ trek.status }}</p>
+                </div>
 
-            <button
-                class="btn btn-primary me-2"
-                @click="viewParticipants(trek.id)"
-            >
-                Participants
-            </button>
+            </div>
 
-            <button
-                class="btn btn-warning"
-                @click="changeStatus(trek.id)"
-            >
-                Change Status
-            </button>
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card text-center shadow">
+
+                <div class="card-body">
+
+                    <h5>Total Participants</h5>
+
+                    <h2>{{ totalParticipants }}</h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+        <div class="col-md-4">
+
+            <div class="card text-center shadow">
+
+                <div class="card-body">
+
+                    <h5>Open Treks</h5>
+
+                    <h2>{{ openTreks }}</h2>
+
+                </div>
+
+            </div>
+
+        </div>
+
+    </div>
+
+
+    <!-- Assigned Treks -->
+
+    <div class="card shadow">
+
+        <div class="card-header bg-primary text-white">
+
+            <h4 class="mb-0">
+                My Assigned Treks
+            </h4>
+
+        </div>
+
+        <div class="card-body p-0">
+
+            <table class="table table-hover table-striped mb-0">
+
+                <thead class="table-dark">
+
+                    <tr>
+
+                        <th>Trek Name</th>
+
+                        <th>Start Date</th>
+
+                        <th>Participants</th>
+
+                        <th>Status</th>
+
+                        <th>Action</th>
+
+                    </tr>
+
+                </thead>
+
+                <tbody>
+
+                    <tr
+                        v-for="trek in treks"
+                        :key="trek.id"
+                    >
+
+                        <td>{{ trek.trek_name }}</td>
+
+                        <td>{{ trek.start_date }}</td>
+
+                        <td>{{ trek.total_participants }}</td>
+
+                        <td>{{ trek.status }}</td>
+
+                        <td>
+
+                            <button
+                                class="btn btn-warning btn-sm"
+                                @click="changeStatus(trek.id)"
+                            >
+                                Status
+                            </button>
+
+                        </td>
+
+                    </tr>
+
+                </tbody>
+
+            </table>
 
         </div>
 
@@ -51,7 +176,10 @@
 <script setup>
 
 import axios from "axios"
-import { ref, onMounted } from "vue"
+import { ref, onMounted, computed } from "vue"
+import { useRouter } from "vue-router"
+
+const router = useRouter()
 
 const treks = ref([])
 
@@ -61,26 +189,58 @@ const headers = {
     Authorization: `Bearer ${token}`
 }
 
+// Load Assigned Treks
 async function loadTreks(){
 
-    const response = await axios.get(
-        "http://127.0.0.1:5000/staff/treks",
-        { headers }
+    try{
+
+        const response = await axios.get(
+            "http://127.0.0.1:5000/staff/treks",
+            { headers }
+        )
+
+        treks.value = response.data
+
+    }
+
+    catch(error){
+
+        console.log(error)
+
+        router.push("/")
+
+    }
+
+}
+
+// Statistics
+
+const totalParticipants = computed(() => {
+
+    return treks.value.reduce(
+        (total, trek) => total + trek.total_participants,
+        0
     )
 
-    treks.value = response.data
+})
+
+const openTreks = computed(() => {
+
+    return treks.value.filter(
+        trek => trek.status === "Open"
+    ).length
+
+})
+
+// View Participants
+
+function goParticipants(){
+
+    router.push("/participants")
 
 }
 
-import { useRouter } from "vue-router"
-
-const router = useRouter()
-
-function viewParticipants(id){
-
-    router.push(`/participants/${id}`)
-
-}
+// Change Trek Status
 
 function changeStatus(id){
 
@@ -88,7 +248,27 @@ function changeStatus(id){
 
 }
 
+// Logout
+
+function logout(){
+
+    localStorage.removeItem("token")
+
+    router.push("/")
+
+}
+
+// On Page Load
+
 onMounted(()=>{
+
+    if(!token){
+
+        router.push("/")
+
+        return
+
+    }
 
     loadTreks()
 

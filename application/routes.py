@@ -1,10 +1,12 @@
-from flask import current_app as app
+from app import app,cache
 from flask import request, jsonify
+from flask_mail import Message
 
 from flask_jwt_extended import (
     create_access_token,
     jwt_required,
-    current_user
+    current_user,
+    get_jwt_identity
 )
 
 from werkzeug.security import (
@@ -17,9 +19,7 @@ from .database import db
 from datetime import datetime
 
 
-# =====================================
-# REGISTER
-# =====================================
+
 
 @app.route("/register", methods=["POST"])
 def register():
@@ -59,9 +59,6 @@ def register():
     }), 201
 
 
-# =====================================
-# LOGIN
-# =====================================
 
 @app.route("/login", methods=["POST"])
 def login():
@@ -104,9 +101,6 @@ def login():
     }), 200
 
 
-# =====================================
-# PROFILE
-# =====================================
 
 @app.route("/profile", methods=["GET"])
 @jwt_required()
@@ -125,7 +119,7 @@ def profile():
 @jwt_required()
 def create_staff():
 
-    # Only admin can create staff
+     
     if current_user.role != "admin":
         return jsonify({
             "message": "Access denied"
@@ -153,7 +147,7 @@ def create_staff():
             "message": "Email already exists"
         }), 409
 
-    # Create user with role = staff
+     
     staff_user = User(
         username=username,
         email=email,
@@ -164,7 +158,6 @@ def create_staff():
     db.session.add(staff_user)
     db.session.commit()
 
-    # Create staff profile
     staff_profile = StaffProfile(
         phone=phone,
         address=address,
@@ -260,18 +253,26 @@ def create_trek():
     db.session.add(trek)
     db.session.commit()
 
+    cache.clear()
+
     return jsonify({
         "message": "Trek created successfully"
     }), 201
 
+
+from app import cache
+
 @app.route("/admin/treks", methods=["GET"])
 @jwt_required()
+@cache.cached(timeout=60)
 def get_treks():
 
-    if current_user.role != "admin":
-        return jsonify({
-            "message": "Access denied"
-        }), 403
+    user_id = get_jwt_identity()
+
+    user = User.query.get(user_id)
+
+    if not user or user.role != "admin":
+        return jsonify({"message": "Access denied"}), 403
 
     treks = Trek.query.all()
 
@@ -320,7 +321,12 @@ def assign_staff(trek_id):
             "message": "Staff not found"
         }), 404
 
-    trek.assigned_staff_id = staff.id
+    if staff in trek.staffs:
+        return jsonify({
+            "message": "Staff is already assigned to this trek"
+        }), 400
+
+    trek.staffs.append(staff)
 
     db.session.commit()
 
@@ -339,13 +345,16 @@ def staff_treks():
             "message": "Access denied"
         }), 403
 
-    treks = Trek.query.filter_by(
-        assigned_staff_id=current_user.id
-    ).all()
+    treks = current_user.treks
 
     result = []
 
     for trek in treks:
+        total_participants = Booking.query.filter_by(
+            trek_id=trek.id,
+            status="Booked"
+        ).count()
+
         result.append({
             "id": trek.id,
             "trek_name": trek.trek_name,
@@ -353,7 +362,9 @@ def staff_treks():
             "difficulty": trek.difficulty,
             "duration": trek.duration,
             "available_slots": trek.available_slots,
-            "status": trek.status
+            "status": trek.status,
+            "start_date": trek.start_date.strftime("%d-%m-%Y"),
+            "total_participants": total_participants
         })
 
     return jsonify(result), 200
@@ -362,7 +373,7 @@ def staff_treks():
 @jwt_required()
 def update_trek_status(trek_id):
 
-    # Only staff can update trek status
+     
     if current_user.role != "staff":
         return jsonify({
             "message": "Access denied"
@@ -375,11 +386,11 @@ def update_trek_status(trek_id):
             "message": "Trek not found"
         }), 404
 
-    # Staff can update only their assigned trek
-    if trek.assigned_staff_id != current_user.id:
+    
+    if current_user not in trek.staffs:
         return jsonify({
             "message": "You are not assigned to this trek"
-        }), 403
+    }), 403
 
     data = request.get_json()
 
@@ -408,13 +419,13 @@ def update_trek_status(trek_id):
         "new_status": trek.status
     }), 200
 
+
 @app.route("/treks", methods=["GET"])
 @jwt_required()
+@cache.cached(timeout=60, key_prefix=lambda: request.full_path)
 def get_open_treks():
 
-    treks = Trek.query.filter_by(
-        status="Open"
-    ).all()
+    treks = Trek.query.filter_by(status="Open").all()
 
     result = []
 
@@ -532,6 +543,7 @@ def get_all_bookings():
             "booking_id": booking.id,
             "username": booking.user.username,
             "trek_name": booking.trek.trek_name,
+            "booking_date": booking.booking_date.strftime("%d-%m-%Y"),
             "status": booking.status
         })
 
@@ -554,7 +566,14 @@ def search_treks():
             "id": trek.id,
             "trek_name": trek.trek_name,
             "location": trek.location,
-            "status": trek.status
+            "difficulty": trek.difficulty,
+            "duration": trek.duration,
+            "available_slots": trek.available_slots,
+            "start_date": trek.start_date,
+            "end_date": trek.end_date,
+            "description": trek.description,
+            "status": trek.status,
+            "assigned_staff_id": trek.assigned_staff_id,
         })
 
     return jsonify(result), 200
@@ -696,39 +715,108 @@ def update_profile():
         "email": current_user.email
     }), 200
 
-@app.route("/staff/trek/<int:trek_id>/participants", methods=["GET"])
+@app.route("/staff/participants", methods=["GET"])
 @jwt_required()
-def view_participants(trek_id):
+def view_all_participants():
 
     if current_user.role != "staff":
         return jsonify({
             "message": "Access denied"
         }), 403
 
-    trek = Trek.query.get(trek_id)
-
-    if not trek:
-        return jsonify({
-            "message": "Trek not found"
-        }), 404
-
-    if trek.assigned_staff_id != current_user.id:
-        return jsonify({
-            "message": "You are not assigned to this trek"
-        }), 403
-
-    bookings = Booking.query.filter_by(
-        trek_id=trek_id
-    ).all()
+    treks = current_user.treks
 
     result = []
 
-    for booking in bookings:
-        result.append({
-            "user_id": booking.user.id,
-            "username": booking.user.username,
-            "email": booking.user.email,
-            "booking_status": booking.status
-        })
+    for trek in treks:
+
+        bookings = Booking.query.filter_by(
+            trek_id=trek.id
+        ).all()
+
+        for booking in bookings:
+
+            result.append({
+
+                "trek_id": trek.id,
+
+                "trek_name": trek.trek_name,
+
+                "user_id": booking.user.id,
+
+                "username": booking.user.username,
+
+                "email": booking.user.email,
+                "booking_date": booking.booking_date.strftime("%d-%m-%Y"),
+
+                "booking_status": booking.status
+
+            })
 
     return jsonify(result), 200
+
+
+@app.route("/export-bookings", methods=["POST"])
+@jwt_required()
+def export_bookings():
+
+    from application.tasks import export_booking_history
+
+    task = export_booking_history.delay(current_user.id)
+
+    return jsonify({
+        "message": "Export started",
+        "task_id": task.id
+    }), 202
+
+from app import mail
+from flask_mail import Message
+
+@app.route("/test-mail")
+def test_mail():
+
+    msg = Message(
+        subject="Testing Flask Mail",
+        recipients=["22f2000008@ds.study.iitm.ac.in"]
+    )
+
+    msg.body = "Congratulations! Flask-Mail is working."
+
+    mail.send(msg)
+
+    return jsonify({"message": "Mail Sent"})
+
+@app.route("/send-reminders", methods=["POST"])
+@jwt_required()
+def send_reminders():
+
+    if current_user.role != "admin":
+        return jsonify({
+            "message": "Access denied"
+        }), 403
+
+    from application.tasks import daily_reminder
+
+    task = daily_reminder.delay()
+
+    return jsonify({
+        "message": "Reminder task started",
+        "task_id": task.id
+    }), 202
+
+
+@app.route("/send-monthly-report", methods=["POST"])
+@jwt_required()
+def send_monthly_report():
+
+    if current_user.role != "admin":
+        return jsonify({"message": "Access denied"}), 403
+
+    from application.tasks import monthly_report
+
+    task = monthly_report.delay()
+
+    return jsonify({
+        "message": "Monthly Report Started",
+        "task_id": task.id
+    }), 202
