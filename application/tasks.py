@@ -153,7 +153,7 @@ def monthly_report():
 
         popular = popular_trek.trek_name if popular_trek else "No bookings"
 
-        # Get admin
+         
         admin = User.query.filter_by(role="admin").first()
 
         if not admin:

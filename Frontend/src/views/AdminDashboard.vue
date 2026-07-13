@@ -1,6 +1,4 @@
 <template>
-
-
   <nav class="navbar navbar-expand-lg navbar-dark bg-dark shadow">
 
     <div class="container-fluid">
@@ -242,14 +240,14 @@ import axios from "axios"
 
 const router = useRouter()
 
-// Reactive Variables
+ 
 
 const users = ref([])
 const staff = ref([])
 const treks = ref([])
 const bookings = ref([])
 
-// JWT Token
+ 
 
 const token = localStorage.getItem("token")
 
@@ -259,7 +257,6 @@ const headers = {
 
 }
 
-// Navbar Navigation
 
 function goUsers(){
 
@@ -287,7 +284,7 @@ function logout(){
 
 }
 
-// Load Dashboard Data
+
 
 async function loadDashboard(){
 
@@ -357,7 +354,6 @@ async function loadDashboard(){
 
 }
 
-// Mounted
 
 onMounted(() => {
 
@@ -369,18 +365,14 @@ onMounted(() => {
 
 <style scoped>
 
-/* ===========================
-   Page
-=========================== */
+ 
 
 .container{
     padding-top:30px;
     padding-bottom:40px;
 }
 
-/* ===========================
-   Navbar
-=========================== */
+ 
 
 .navbar{
     padding:15px 25px;
@@ -403,9 +395,7 @@ onMounted(() => {
     transform:translateY(-2px);
 }
 
-/* ===========================
-   Dashboard Heading
-=========================== */
+ 
 
 h2{
     font-weight:700;
@@ -413,9 +403,7 @@ h2{
     margin-bottom:30px;
 }
 
-/* ===========================
-   Statistics Cards
-=========================== */
+ 
 
 .card{
 
@@ -455,7 +443,7 @@ h2{
 
 }
 
-/* Different Colors */
+ 
 
 .row .col-md-3:nth-child(1) .card{
 
@@ -488,10 +476,7 @@ h2{
     color:black;
 
 }
-
-/* ===========================
-   Create Staff Button
-=========================== */
+ 
 
 .text-end .btn{
 
@@ -503,9 +488,7 @@ h2{
 
 }
 
-/* ===========================
-   Booking Card
-=========================== */
+ 
 
 .card-header{
 
@@ -519,9 +502,7 @@ h2{
 
 }
 
-/* ===========================
-   Table
-=========================== */
+ 
 
 .table{
 
@@ -545,9 +526,7 @@ h2{
 
 }
 
-/* ===========================
-   Badge
-=========================== */
+ 
 
 .badge{
 
@@ -559,9 +538,7 @@ h2{
 
 }
 
-/* ===========================
-   Responsive
-=========================== */
+ 
 
 @media(max-width:768px){
 

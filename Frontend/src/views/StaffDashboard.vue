@@ -1,5 +1,4 @@
 <template>
-
 <nav class="navbar navbar-expand-lg navbar-dark bg-dark px-4">
 
     <div class="container-fluid">
@@ -43,8 +42,6 @@
     <h2 class="text-center mb-4">
         Staff Dashboard
     </h2>
-
-    <!-- Statistics -->
 
     <div class="row mb-4">
 
@@ -98,8 +95,6 @@
 
     </div>
 
-
-    <!-- Assigned Treks -->
 
     <div class="card shadow">
 
@@ -189,7 +184,6 @@ const headers = {
     Authorization: `Bearer ${token}`
 }
 
-// Load Assigned Treks
 async function loadTreks(){
 
     try{
@@ -213,7 +207,7 @@ async function loadTreks(){
 
 }
 
-// Statistics
+ 
 
 const totalParticipants = computed(() => {
 
@@ -232,7 +226,7 @@ const openTreks = computed(() => {
 
 })
 
-// View Participants
+ 
 
 function goParticipants(){
 
@@ -240,7 +234,7 @@ function goParticipants(){
 
 }
 
-// Change Trek Status
+ 
 
 function changeStatus(id){
 
@@ -248,7 +242,6 @@ function changeStatus(id){
 
 }
 
-// Logout
 
 function logout(){
 
@@ -258,7 +251,6 @@ function logout(){
 
 }
 
-// On Page Load
 
 onMounted(()=>{
 

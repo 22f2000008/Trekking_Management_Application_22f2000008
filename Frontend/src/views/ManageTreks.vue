@@ -281,8 +281,6 @@ function logout() {
     router.push("/")
 }
 
-// Load Treks
-
 async function loadTreks(){
 
     const response = await axios.get(
@@ -329,7 +327,6 @@ async function searchTreks(){
 
 }
 
-// Load Staff
 
 async function loadStaff(){
 
@@ -342,7 +339,6 @@ async function loadStaff(){
 
 }
 
-// Create Trek
 
 async function createTrek(){
 
@@ -379,7 +375,6 @@ async function createTrek(){
 
 }
 
-// Assign Staff
 
 async function assignStaff(trek){
 
@@ -410,7 +405,6 @@ async function assignStaff(trek){
     }
 
 }
-// On Page Load
 
 onMounted(async ()=>{
 

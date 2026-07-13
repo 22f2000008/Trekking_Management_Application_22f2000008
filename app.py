@@ -20,25 +20,13 @@ mail = Mail()
 def create_app():
 
     app = Flask(__name__)
-
     app.config.from_object(LocalDevelopmentConfig)
-     
-    # Extensions
-    
     db.init_app(app)
-
     jwt.init_app(app)
-
     cache.init_app(app)
-
     mail.init_app(app)
-
-    # Celery Configuration
-
     celery.conf.broker_url = app.config["BROKER_URL"]
-
     celery.conf.result_backend = app.config["RESULT_BACKEND"]
-
     CORS(app)
 
     return app

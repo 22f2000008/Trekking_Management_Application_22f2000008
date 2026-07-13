@@ -176,7 +176,7 @@ async function searchUsers(){
 
     try{
 
-        // If search box is empty, load all users
+      
         if(searchKeyword.value.trim() === ""){
 
             loadUsers()

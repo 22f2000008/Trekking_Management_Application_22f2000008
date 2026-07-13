@@ -27,12 +27,10 @@ class Config:
     MAIL_USE_TLS = True
     MAIL_USE_SSL = False
 
-    # Replace with your Gmail
+     
     MAIL_USERNAME = "22f2000008@ds.study.iitm.ac.in"
 
-    # Replace with your 16-character App Password
     MAIL_PASSWORD = "tvkt gdli bhts mpbs"
-
 
     MAIL_DEFAULT_SENDER = "22f2000008@ds.study.iitm.ac.in"
 
