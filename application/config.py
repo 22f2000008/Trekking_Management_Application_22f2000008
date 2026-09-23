@@ -30,7 +30,7 @@ class Config:
      
     MAIL_USERNAME = "22f2000008@ds.study.iitm.ac.in"
 
-    MAIL_PASSWORD = "tvkt gdli bhts mpbs"
+    MAIL_PASSWORD = "xxxxxxxxxxxx"
 
     MAIL_DEFAULT_SENDER = "22f2000008@ds.study.iitm.ac.in"
 
